@@ -5,13 +5,14 @@ package com.lucasmellof.bookimages.packet;
  */
 
 import com.lucasmellof.bookimages.Const;
-import com.lucasmellof.bookimages.image.ClientImageUploadManager;
 import com.lucasmellof.bookimages.image.ServerImageUploadManager;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.UUID;
 
@@ -19,7 +20,7 @@ public record ServerboundImageUploadChunkPacket(UUID transferId, int chunkIndex,
         implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<ServerboundImageUploadChunkPacket> TYPE =
-            new CustomPacketPayload.Type<>(Const.of("image_packet"));
+            new CustomPacketPayload.Type<>(Const.of("image_upload_chunk_packet"));
 
 	public static final StreamCodec<ByteBuf, ServerboundImageUploadChunkPacket> CODEC = StreamCodec.composite(
 			UUIDUtil.STREAM_CODEC, ServerboundImageUploadChunkPacket::transferId,
@@ -35,7 +36,7 @@ public record ServerboundImageUploadChunkPacket(UUID transferId, int chunkIndex,
         return TYPE;
     }
 
-	public void handle() {
-
+	public void handle(Player player) {
+		ServerImageUploadManager.INSTANCE.handleChunk((ServerPlayer) player, this);
 	}
 }

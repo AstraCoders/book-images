@@ -1,7 +1,11 @@
 package com.lucasmellof.bookimages.platform.services;
 
+import com.lucasmellof.bookimages.packet.ClientboundImageUploadConfirmPacket;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 
 public interface IPlatformHelper {
 
@@ -38,4 +42,7 @@ public interface IPlatformHelper {
 
     DataComponentType<ListTag> getBookImagesTag();
 
+    void sendPacketToServer(CustomPacketPayload object);
+
+	void sendPacketToClient(ServerPlayer player, CustomPacketPayload pkt);
 }

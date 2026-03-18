@@ -1,15 +1,17 @@
 package com.lucasmellof.bookimages.image;
 
-import com.lucasmellof.bookimages.packet.ServerboundImageUploadChunkPacket;
-import com.lucasmellof.bookimages.packet.ServerboundImageUploadFinishPacket;
-import com.lucasmellof.bookimages.packet.ServerboundImageUploadStartPacket;
+import com.lucasmellof.bookimages.packet.*;
+import com.lucasmellof.bookimages.platform.Services;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 
+import javax.imageio.ImageIO;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -20,8 +22,9 @@ import java.util.UUID;
 @Slf4j
 @NoArgsConstructor
 public class ServerImageUploadManager {
+    public static final ServerImageUploadManager INSTANCE = new ServerImageUploadManager();
 
-    public static final int MAX_CHUNK_SIZE = 32_767;  // using safe values from create's schematicanon
+    public static final int MAX_CHUNK_SIZE = 32_767; // using safe values from create's schematicanon
     public static final int MAX_CHUNKS = 1024; // 32MB max size
     public static final int MAX_SIZE = MAX_CHUNK_SIZE * MAX_CHUNKS;
     private static final Map<UUID, Map<UUID, IncomingImageUpload>> ACTIVE_UPLOADS = new HashMap<>();
@@ -97,6 +100,14 @@ public class ServerImageUploadManager {
             return;
         }
 
+        log.info(
+                "Received chunk {} of {} for player {} upload {} ({} bytes)",
+                pkt.chunkIndex() + 1,
+                pkt.totalChunks(),
+                player.getName().getString(),
+                pkt.transferId(),
+                pkt.data().length);
+
         boolean accept = upload.receiveChunk(pkt.chunkIndex(), pkt.data());
         if (!accept) {
             clean(playerUploads, pkt.transferId());
@@ -166,22 +177,99 @@ public class ServerImageUploadManager {
             log.warn("Failed to create book_images folder at {}", folder.getAbsolutePath());
             return;
         }
-		var imageFile = new File(folder, "image_" + transferId + ".png");
-		try {
-			Files.write(imageFile.toPath(), imageData);
-			log.info("Saved uploaded image for player {} to disk at {}",
-					player.getName().getString(),
-					imageFile.getAbsolutePath());
-		} catch (java.io.IOException e) {
-			log.warn("Failed to save uploaded image for player {} to disk: {}",
-					player.getName().getString(),
-					e.getMessage());
-			return;
-		}
-        // todo: inform client of successful upload and provide image data to book item logic
+        var imageFile = new File(folder, "image_" + transferId + ".png");
+        try {
+            Files.write(imageFile.toPath(), imageData);
+            log.info(
+                    "Saved uploaded image for player {} to disk at {}",
+                    player.getName().getString(),
+                    imageFile.getAbsolutePath());
+        } catch (java.io.IOException e) {
+            log.warn(
+                    "Failed to save uploaded image for player {} to disk: {}",
+                    player.getName().getString(),
+                    e.getMessage());
+            return;
+        }
+
+        // get image width and height
+        int width;
+        int height;
+
+        try (var inputStream = Files.newInputStream(imageFile.toPath())) {
+            var image = ImageIO.read(inputStream);
+            if (image == null) {
+                log.warn(
+                        "Failed to read uploaded image for player {} as an image",
+                        player.getName().getString());
+                return;
+            }
+            width = image.getWidth();
+            height = image.getHeight();
+        } catch (java.io.IOException e) {
+            log.warn(
+                    "Failed to read uploaded image for player {}: {}",
+                    player.getName().getString(),
+                    e.getMessage());
+            return;
+        }
+
+        Services.PLATFORM.sendPacketToClient(
+                player, new ClientboundImageUploadConfirmPacket(transferId, width, height));
     }
 
     private void clean(Map<UUID, IncomingImageUpload> playerUploads, UUID transferId) {
         playerUploads.remove(transferId);
+    }
+
+    public void handleRequest(ServerPlayer player, ServerboundImageRequestPacket pkt) {
+        Path file = player.level()
+                .getServer()
+                .getWorldPath(LevelResource.ROOT)
+                .resolve("book_images")
+                .resolve("image_" + pkt.imageId() + ".png");
+        if (!file.toFile().exists()) {
+            log.warn(
+                    "Player {} requested image with ID {} but it does not exist on disk",
+                    player.getName().getString(),
+                    pkt.imageId());
+            return;
+        }
+
+        // get image as bytes
+        byte[] img;
+        try {
+            img = Files.readAllBytes(file);
+        }catch (Exception e) {
+            // todo: handle later
+            return;
+        }
+
+        if (img.length == 0 || img.length > MAX_SIZE) {
+            log.warn(
+                    "Player {} requested image {} with invalid size {}",
+                    player.getName().getString(),
+                    pkt.imageId(),
+                    img.length);
+            return;
+        }
+
+        int totalChunks = (img.length + MAX_CHUNK_SIZE - 1) / MAX_CHUNK_SIZE;
+        Services.PLATFORM.sendPacketToClient(
+                player,
+                new ClientboundImageResponseStartPacket(pkt.imageId(), img.length, totalChunks));
+
+        //todo: don't send all chunks at the same time
+        for (int chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            int start = chunkIndex * MAX_CHUNK_SIZE;
+            int end = Math.min(start + MAX_CHUNK_SIZE, img.length);
+            byte[] data = Arrays.copyOfRange(img, start, end);
+
+            Services.PLATFORM.sendPacketToClient(
+                    player,
+                    new ClientboundImageResponseChunkPacket(pkt.imageId(), chunkIndex, totalChunks, data));
+        }
+
+        Services.PLATFORM.sendPacketToClient(player, new ClientboundImageResponseFinishPacket(pkt.imageId()));
     }
 }

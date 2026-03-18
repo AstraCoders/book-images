@@ -18,8 +18,8 @@ public class OutgoingImageUpload implements  AutoCloseable {
 
 	private final InputStream inputStream;
 
-	public OutgoingImageUpload(String imageName, InputStream inputStream, long size, int totalChunks) {
-		this.transferId = UUID.randomUUID();
+	public OutgoingImageUpload(UUID transferId, String imageName, InputStream inputStream, long size, int totalChunks) {
+		this.transferId = transferId;
 		this.imageName = imageName;
 		this.inputStream = inputStream;
 		this.size = size;

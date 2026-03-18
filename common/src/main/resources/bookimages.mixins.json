@@ -11,8 +11,7 @@
     "MixinBookAccess",
     "MixinBookEditScreen",
     "MixinBookViewScreen",
-    "MixinMain",
-    "MixinMinecraft"
+    "MixinMain"
   ],
   "server": [],
   "injectors": {
