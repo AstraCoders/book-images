@@ -9,7 +9,7 @@ import java.util.UUID;
  * @author Lucasmellof, Lucas de Mello Freitas created on 18/03/2026
  */
 @Getter
-public class OutgoingImageUpload implements  AutoCloseable {
+public class OutgoingImageUpload implements AutoCloseable {
 	private final UUID transferId;
 	private final String imageName;
 	private final long size;

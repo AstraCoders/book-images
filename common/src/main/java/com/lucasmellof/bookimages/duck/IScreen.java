@@ -7,4 +7,12 @@ import net.minecraft.client.gui.components.AbstractWidget;
  */
 public interface IScreen {
 	void bookImages$addComponent(AbstractWidget widget);
+
+	int bookImages$getBookLeft();
+
+	int bookImages$getBookTop();
+
+	int bookImages$getBookWidth();
+
+	int bookImages$getBookHeight();
 }

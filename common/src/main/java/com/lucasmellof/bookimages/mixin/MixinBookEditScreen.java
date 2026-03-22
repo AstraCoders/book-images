@@ -39,4 +39,24 @@ public class MixinBookEditScreen extends Screen implements IScreen {
 	public void bookImages$addComponent(AbstractWidget widget) {
 		this.addRenderableWidget(widget);
 	}
+
+	@Override
+	public int bookImages$getBookLeft() {
+		return (this.width / 2) - (bookImages$getBookHeight() / 2) + 2;
+	}
+
+	@Override
+	public int bookImages$getBookTop() {
+		return 30;
+	}
+
+	@Override
+	public int bookImages$getBookWidth() {
+		return 116;
+	}
+
+	@Override
+	public int bookImages$getBookHeight() {
+		return 130;
+	}
 }

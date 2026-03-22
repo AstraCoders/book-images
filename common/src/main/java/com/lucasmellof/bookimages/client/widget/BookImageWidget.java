@@ -1,8 +1,10 @@
 package com.lucasmellof.bookimages.client.widget;
 
 import com.lucasmellof.bookimages.Const;
+import com.lucasmellof.bookimages.duck.IScreen;
 import com.lucasmellof.bookimages.image.ClientImageUploadManager;
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -39,10 +41,21 @@ public class BookImageWidget extends AbstractWidget {
 	private int startHeight;
 
 	private final UUID img;
+	private final IScreen parent;
+	private final float aspectRatio;
 
-	public BookImageWidget(int x, int y, int width, int height, UUID image) {
+	public BookImageWidget(int x, int y, int width, int height, IScreen parent, UUID image) {
 		super(x, y, width /2, height/2, Component.empty());
 		this.img = image;
+		this.parent = parent;
+
+		this.aspectRatio = height <= 0 ? 1.0F : (float) width / (float) height;
+		this.setWidth(Math.min(this.getWidth(),parent.bookImages$getBookWidth()));
+		this.setHeight(Math.min(this.getHeight(), parent.bookImages$getBookHeight()));
+
+		this.setX(Math.max(0, Math.min(this.getX(),parent.bookImages$getBookWidth() - this.getWidth())));
+		this.setY(Math.max(0, Math.min(this.getY(), parent.bookImages$getBookHeight() - this.getHeight())));
+
 	}
 
 	@Override
@@ -52,11 +65,14 @@ public class BookImageWidget extends AbstractWidget {
 			return;
 		}
 
+		int renderX = this.parent.bookImages$getBookLeft() + this.getX();
+		int renderY = this.parent.bookImages$getBookTop() + this.getY();
+
 		guiGraphics.blit(
 				RenderPipelines.GUI_TEXTURED,
 				id,
-				this.getX(),
-				this.getY(),
+				renderX,
+				renderY,
 				0,
 				0,
 				this.width,
@@ -67,18 +83,27 @@ public class BookImageWidget extends AbstractWidget {
 				TEXTURE_HEIGHT
 		);
 
-		int handleLeft = this.getX() + this.width - RESIZE_HANDLE_SIZE;
-		int handleTop = this.getY() + this.height - RESIZE_HANDLE_SIZE;
+		var inside = this.isInsideWidget(mouseX, mouseY);
+		if (!inside) return;
+
+		guiGraphics.requestCursor(CursorTypes.POINTING_HAND);
+		int handleLeft = renderX + this.width - RESIZE_HANDLE_SIZE;
+		int handleTop = renderY + this.height - RESIZE_HANDLE_SIZE;
 
 		int handleColor = isMouseOverResizeHandle(mouseX, mouseY) ? 0xC0FFFFFF : 0x80FFFFFF;
 
 		guiGraphics.fill(
 				handleLeft,
 				handleTop,
-				this.getX() + this.width,
-				this.getY() + this.height,
+				renderX + this.width,
+				renderY + this.height,
 				handleColor
 		);
+
+		guiGraphics.fill(renderX, renderY, renderX + this.getWidth(), renderY + 1, 0x80FFFFFF);
+		guiGraphics.fill(renderX, renderY + this.getHeight() - 1, renderX + this.getWidth(), renderY + this.getHeight(), 0x80FFFFFF);
+		guiGraphics.fill(renderX, renderY, renderX + 1, renderY + this.getHeight(), 0x80FFFFFF);
+		guiGraphics.fill(renderX + this.getWidth() - 1, renderY, renderX + this.getWidth(), renderY + this.getHeight(), 0x80FFFFFF);
 	}
 
 	@Override
@@ -98,8 +123,8 @@ public class BookImageWidget extends AbstractWidget {
 			this.resizing = true;
 			this.dragging = false;
 
-			this.startMouseX = mouseX;
-			this.startMouseY = mouseY;
+			this.startMouseX = mouseX - this.parent.bookImages$getBookLeft();
+			this.startMouseY = mouseY - this.parent.bookImages$getBookTop();
 			this.startWidth = this.width;
 			this.startHeight = this.height;
 
@@ -110,8 +135,8 @@ public class BookImageWidget extends AbstractWidget {
 			this.dragging = true;
 			this.resizing = false;
 
-			this.dragOffsetX = mouseX - this.getX();
-			this.dragOffsetY = mouseY - this.getY();
+			this.dragOffsetX = (mouseX - this.parent.bookImages$getBookLeft()) - this.getX();
+			this.dragOffsetY = (mouseY - this.parent.bookImages$getBookTop()) - this.getY();
 
 			return true;
 		}
@@ -124,15 +149,15 @@ public class BookImageWidget extends AbstractWidget {
 		int mouseX = (int) ev.x();
 		int mouseY = (int) ev.y();
 
-		int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-		int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+		int relativeMouseX = mouseX - this.parent.bookImages$getBookLeft();
+		int relativeMouseY = mouseY - this.parent.bookImages$getBookTop();
 
 		if (this.dragging) {
-			int newX = mouseX - this.dragOffsetX;
-			int newY = mouseY - this.dragOffsetY;
+			int newX = relativeMouseX - this.dragOffsetX;
+			int newY = relativeMouseY - this.dragOffsetY;
 
-			newX = Math.max(0, Math.min(newX, screenWidth - this.width));
-			newY = Math.max(0, Math.min(newY, screenHeight - this.height));
+			newX = Math.max(0, Math.min(newX, this.parent.bookImages$getBookWidth() - this.width));
+			newY = Math.max(0, Math.min(newY, this.parent.bookImages$getBookHeight() - this.height));
 
 			this.setX(newX);
 			this.setY(newY);
@@ -140,17 +165,62 @@ public class BookImageWidget extends AbstractWidget {
 		}
 
 		if (this.resizing) {
-			int newWidth = this.startWidth + (mouseX - this.startMouseX);
-			int newHeight = this.startHeight + (mouseY - this.startMouseY);
+			boolean free = ev.hasAltDown();
 
-			newWidth = Math.max(MIN_WIDTH, newWidth);
-			newHeight = Math.max(MIN_HEIGHT, newHeight);
+			int maxWidth = this.parent.bookImages$getBookWidth() - this.getX();
+			int maxHeight = this.parent.bookImages$getBookHeight() - this.getY();
 
-			newWidth = Math.min(newWidth, screenWidth - this.getX());
-			newHeight = Math.min(newHeight, screenHeight - this.getY());
+			int deltaX = relativeMouseX - this.startMouseX;
+			int deltaY = relativeMouseY - this.startMouseY;
 
-			this.width = newWidth;
-			this.height = newHeight;
+			int newWidth;
+			int newHeight;
+
+			if (free) {
+				newWidth = this.startWidth + deltaX;
+				newHeight = this.startHeight + deltaY;
+
+				newWidth = Math.max(MIN_WIDTH, newWidth);
+				newHeight = Math.max(MIN_HEIGHT, newHeight);
+
+				newWidth = Math.min(newWidth, maxWidth);
+				newHeight = Math.min(newHeight, maxHeight);
+			} else {
+				if (Math.abs(deltaX) >= Math.abs(deltaY)) {
+					newWidth = this.startWidth + deltaX;
+					newWidth = Math.max(MIN_WIDTH, newWidth);
+					newHeight = Math.max(MIN_HEIGHT, Math.round(newWidth / this.aspectRatio));
+				} else {
+					newHeight = this.startHeight + deltaY;
+					newHeight = Math.max(MIN_HEIGHT, newHeight);
+					newWidth = Math.max(MIN_WIDTH, Math.round(newHeight * this.aspectRatio));
+				}
+
+				if (newWidth > maxWidth) {
+					newWidth = maxWidth;
+					newHeight = Math.max(MIN_HEIGHT, Math.round(newWidth / this.aspectRatio));
+				}
+
+				if (newHeight > maxHeight) {
+					newHeight = maxHeight;
+					newWidth = Math.max(MIN_WIDTH, Math.round(newHeight * this.aspectRatio));
+				}
+
+				newWidth = Math.max(MIN_WIDTH, newWidth);
+				newHeight = Math.max(MIN_HEIGHT, newHeight);
+
+				if (newWidth > maxWidth) {
+					newWidth = maxWidth;
+					newHeight = Math.max(MIN_HEIGHT, Math.round(newWidth / this.aspectRatio));
+				}
+				if (newHeight > maxHeight) {
+					newHeight = maxHeight;
+					newWidth = Math.max(MIN_WIDTH, Math.round(newHeight * this.aspectRatio));
+				}
+			}
+
+			this.setWidth(newWidth);
+			this.setHeight(newHeight);
 			return true;
 		}
 
@@ -170,18 +240,24 @@ public class BookImageWidget extends AbstractWidget {
 	}
 
 
-	private boolean isInsideWidget(double mouseX, double mouseY) {
-		return mouseX >= this.getX()
-					   && mouseX < this.getX() + this.width
-					   && mouseY >= this.getY()
-					   && mouseY < this.getY() + this.height;
+	public boolean isInsideWidget(double mouseX, double mouseY) {
+		int renderX = this.parent.bookImages$getBookLeft() + this.getX();
+		int renderY = this.parent.bookImages$getBookTop() + this.getY();
+
+		return mouseX >= renderX
+					   && mouseX < renderX + this.width
+					   && mouseY >= renderY
+					   && mouseY < renderY + this.height;
 	}
 
-	private boolean isMouseOverResizeHandle(double mouseX, double mouseY) {
-		int left = this.getX() + this.width - RESIZE_HANDLE_SIZE;
-		int top = this.getY() + this.height - RESIZE_HANDLE_SIZE;
-		int right = this.getX() + this.width;
-		int bottom = this.getY() + this.height;
+	public boolean isMouseOverResizeHandle(double mouseX, double mouseY) {
+		int renderX = this.parent.bookImages$getBookLeft() + this.getX();
+		int renderY = this.parent.bookImages$getBookTop() + this.getY();
+
+		int left = renderX + this.width - RESIZE_HANDLE_SIZE;
+		int top = renderY + this.height - RESIZE_HANDLE_SIZE;
+		int right = renderX + this.width;
+		int bottom = renderY + this.height;
 
 		return mouseX >= left && mouseX < right && mouseY >= top && mouseY < bottom;
 	}
