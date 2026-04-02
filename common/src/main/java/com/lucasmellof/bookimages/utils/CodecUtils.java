@@ -4,8 +4,8 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 
 /*
  * @author Lucasmellof, Lucas de Mello Freitas created on 18/03/2026
