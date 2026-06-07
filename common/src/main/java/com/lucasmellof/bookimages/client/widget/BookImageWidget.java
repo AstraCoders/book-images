@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
@@ -42,12 +43,14 @@ public class BookImageWidget extends AbstractWidget {
 
 	private final UUID img;
 	private final IScreen parent;
+	private final int page;
 	private final float aspectRatio;
 
-	public BookImageWidget(int x, int y, int width, int height, IScreen parent, UUID image) {
+	public BookImageWidget(int x, int y, int width, int height, IScreen parent, UUID image, int page) {
 		super(x, y, width /2, height/2, Component.empty());
 		this.img = image;
 		this.parent = parent;
+		this.page = page;
 
 		this.aspectRatio = height <= 0 ? 1.0F : (float) width / (float) height;
 		this.setWidth(Math.min(this.getWidth(),parent.bookImages$getBookWidth()));
@@ -60,6 +63,8 @@ public class BookImageWidget extends AbstractWidget {
 
 	@Override
 	protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+		if (this.page != this.parent.bookImages$getCurrentPage()) return;
+
 		Identifier id = ClientImageUploadManager.INSTANCE.requestImage(this.img);
 		if (id == null) {
 			return;
@@ -83,6 +88,8 @@ public class BookImageWidget extends AbstractWidget {
 				TEXTURE_HEIGHT
 		);
 
+		if (!this.parent.bookImages$isEditable()) return;
+
 		var inside = this.isInsideWidget(mouseX, mouseY);
 		if (!inside) return;
 
@@ -90,7 +97,7 @@ public class BookImageWidget extends AbstractWidget {
 		int handleLeft = renderX + this.width - RESIZE_HANDLE_SIZE;
 		int handleTop = renderY + this.height - RESIZE_HANDLE_SIZE;
 
-		int handleColor = isMouseOverResizeHandle(mouseX, mouseY) ? 0xC0FFFFFF : 0x80FFFFFF;
+		int handleColor = isMouseOverResizeHandle(mouseX, mouseY) ? 0xc059168b : 0xff59168b;
 
 		guiGraphics.fill(
 				handleLeft,
@@ -100,10 +107,10 @@ public class BookImageWidget extends AbstractWidget {
 				handleColor
 		);
 
-		guiGraphics.fill(renderX, renderY, renderX + this.getWidth(), renderY + 1, 0x80FFFFFF);
-		guiGraphics.fill(renderX, renderY + this.getHeight() - 1, renderX + this.getWidth(), renderY + this.getHeight(), 0x80FFFFFF);
-		guiGraphics.fill(renderX, renderY, renderX + 1, renderY + this.getHeight(), 0x80FFFFFF);
-		guiGraphics.fill(renderX + this.getWidth() - 1, renderY, renderX + this.getWidth(), renderY + this.getHeight(), 0x80FFFFFF);
+		guiGraphics.fill(renderX, renderY, renderX + this.getWidth(), renderY + 1, 0xff59168b);
+		guiGraphics.fill(renderX, renderY + this.getHeight() - 1, renderX + this.getWidth(), renderY + this.getHeight(), 0xff59168b);
+		guiGraphics.fill(renderX, renderY, renderX + 1, renderY + this.getHeight(), 0xff59168b);
+		guiGraphics.fill(renderX + this.getWidth() - 1, renderY, renderX + this.getWidth(), renderY + this.getHeight(), 0xff59168b);
 	}
 
 	@Override
@@ -112,6 +119,9 @@ public class BookImageWidget extends AbstractWidget {
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent ev, boolean unknown) {
+		if (this.page != this.parent.bookImages$getCurrentPage()) return false;
+		if (!this.parent.bookImages$isEditable()) return false;
+
 		if (ev.button() != InputConstants.MOUSE_BUTTON_LEFT) {
 			return false;
 		}
@@ -146,6 +156,9 @@ public class BookImageWidget extends AbstractWidget {
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent ev, double dragX, double dragY) {
+		if (this.page != this.parent.bookImages$getCurrentPage()) return false;
+		if (!this.parent.bookImages$isEditable()) return false;
+
 		int mouseX = (int) ev.x();
 		int mouseY = (int) ev.y();
 
@@ -241,6 +254,8 @@ public class BookImageWidget extends AbstractWidget {
 
 
 	public boolean isInsideWidget(double mouseX, double mouseY) {
+		if (this.page != this.parent.bookImages$getCurrentPage()) return false;
+
 		int renderX = this.parent.bookImages$getBookLeft() + this.getX();
 		int renderY = this.parent.bookImages$getBookTop() + this.getY();
 
@@ -251,6 +266,8 @@ public class BookImageWidget extends AbstractWidget {
 	}
 
 	public boolean isMouseOverResizeHandle(double mouseX, double mouseY) {
+		if (this.page != this.parent.bookImages$getCurrentPage()) return false;
+
 		int renderX = this.parent.bookImages$getBookLeft() + this.getX();
 		int renderY = this.parent.bookImages$getBookTop() + this.getY();
 
@@ -260,5 +277,31 @@ public class BookImageWidget extends AbstractWidget {
 		int bottom = renderY + this.height;
 
 		return mouseX >= left && mouseX < right && mouseY >= top && mouseY < bottom;
+	}
+
+	public CompoundTag toTag() {
+		var tag = new CompoundTag();
+		tag.putString("id", this.img.toString());
+		tag.putInt("page", this.page);
+		tag.putInt("x", this.getX());
+		tag.putInt("y", this.getY());
+		tag.putInt("width", this.getWidth());
+		tag.putInt("height", this.getHeight());
+		return tag;
+	}
+
+	public static BookImageWidget fromTag(CompoundTag tag, IScreen parent) {
+		try {
+			return new BookImageWidget(
+					tag.getIntOr("x", 0),
+					tag.getIntOr("y", 0),
+					tag.getIntOr("width", MIN_WIDTH) * 2,
+					tag.getIntOr("height", MIN_HEIGHT) * 2,
+					parent,
+					UUID.fromString(tag.getStringOr("id", "")),
+					tag.getIntOr("page", 0));
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
 	}
 }

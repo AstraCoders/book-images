@@ -1,6 +1,5 @@
 package com.lucasmellof.bookimages.client;
 
-import com.lucasmellof.bookimages.functional.ThrowableConsumer;
 import lombok.NoArgsConstructor;
 
 import javax.imageio.ImageIO;

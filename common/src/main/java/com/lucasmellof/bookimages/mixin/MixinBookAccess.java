@@ -27,7 +27,7 @@ public class MixinBookAccess implements IBookAccess {
 
 	@Override
 	public void bookImages$setImages(ListTag tag) {
-
+		this.bookImages$images = tag;
 	}
 
 	@Inject(method = "fromItem", at = @At("RETURN"))

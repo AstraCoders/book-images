@@ -30,6 +30,10 @@ public class ModServerEvents {
 				ServerboundImageRequestPacket.TYPE,
 				ServerboundImageRequestPacket.CODEC,
 				(pkt, ctx) -> pkt.handle(ctx.player()));
+		registrar.playToServer(
+				ServerboundBookImagesSavePacket.TYPE,
+				ServerboundBookImagesSavePacket.CODEC,
+				(pkt, ctx) -> pkt.handle(ctx.player()));
 
 		// server -> client
 		registrar.playToClient(
