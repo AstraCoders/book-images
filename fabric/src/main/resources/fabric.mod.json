@@ -16,7 +16,10 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-	        "com.lucasmellof.bookimages.ExampleMod"
+	        "com.lucasmellof.bookimages.BookImages"
+        ],
+        "client": [
+            "com.lucasmellof.bookimages.BookImagesClient"
         ]
     },
     "mixins": [
@@ -28,8 +31,5 @@
         "fabric-api": "*",
         "minecraft": "~${minecraft_version}",
         "java": ">=${java_version}"
-    },
-    "suggests": {
-        "another-mod": "*"
     }
 }
