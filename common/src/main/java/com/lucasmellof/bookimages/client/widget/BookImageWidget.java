@@ -26,6 +26,7 @@ public class BookImageWidget extends AbstractWidget {
 	private static final int MIN_WIDTH = 32;
 	private static final int MIN_HEIGHT = 32;
 	private static final int RESIZE_HANDLE_SIZE = 8;
+	private static final int REMOVE_BUTTON_SIZE = 8;
 
 	private static final int TEXTURE_WIDTH = 128;
 	private static final int TEXTURE_HEIGHT = 128;
@@ -106,10 +107,31 @@ public class BookImageWidget extends AbstractWidget {
 		if (!inside) return;
 
 		guiGraphics.requestCursor(CursorTypes.POINTING_HAND);
+		// remove button
+		int removeButtonRight = renderX + this.width -1;
+		int removeButtonBottom = renderY + REMOVE_BUTTON_SIZE + 1;
+		int removeButtonLeft = removeButtonRight - REMOVE_BUTTON_SIZE;
+
+		var y = renderY + 1;
+		guiGraphics.fill(
+				removeButtonLeft,
+				y,
+				removeButtonRight,
+				removeButtonBottom,
+				isMouseOverRemoveButton(mouseX, mouseY) ? 0xffff5555 : 0xffaa0000
+		);
+		guiGraphics.fill(removeButtonLeft + 2, y + 2, removeButtonLeft + 3, y + 3, 0xffffffff);
+		guiGraphics.fill(removeButtonLeft + 5, y + 2, removeButtonLeft + 6, y + 3, 0xffffffff);
+		guiGraphics.fill(removeButtonLeft + 3, y + 3, removeButtonLeft + 5, y + 5, 0xffffffff);
+		guiGraphics.fill(removeButtonLeft + 2, y + 5, removeButtonLeft + 3, y + 6, 0xffffffff);
+		guiGraphics.fill(removeButtonLeft + 5, y + 5, removeButtonLeft + 6, y + 6, 0xffffffff);
+
+		// resize button
 		int handleLeft = renderX + this.width - RESIZE_HANDLE_SIZE;
 		int handleTop = renderY + this.height - RESIZE_HANDLE_SIZE;
 
 		int handleColor = isMouseOverResizeHandle(mouseX, mouseY) ? 0xc059168b : 0xff59168b;
+		//
 
 		guiGraphics.fill(
 				handleLeft,
@@ -140,6 +162,11 @@ public class BookImageWidget extends AbstractWidget {
 
 		int mouseX = (int) ev.x();
 		int mouseY = (int) ev.y();
+
+		if (isMouseOverRemoveButton(mouseX, mouseY)) {
+			this.parent.bookImages$removeComponent(this);
+			return true;
+		}
 
 		if (isMouseOverResizeHandle(mouseX, mouseY)) {
 			this.resizing = true;
@@ -287,6 +314,17 @@ public class BookImageWidget extends AbstractWidget {
 		int top = renderY + this.height - RESIZE_HANDLE_SIZE;
 		int right = renderX + this.width;
 		int bottom = renderY + this.height;
+
+		return mouseX >= left && mouseX < right && mouseY >= top && mouseY < bottom;
+	}
+
+	public boolean isMouseOverRemoveButton(double mouseX, double mouseY) {
+		if (this.page != this.parent.bookImages$getCurrentPage()) return false;
+
+		int right = this.parent.bookImages$getBookLeft() + this.getX() + this.width;
+		int top = this.parent.bookImages$getBookTop() + this.getY();
+		int left = right - REMOVE_BUTTON_SIZE;
+		int bottom = top + REMOVE_BUTTON_SIZE;
 
 		return mouseX >= left && mouseX < right && mouseY >= top && mouseY < bottom;
 	}

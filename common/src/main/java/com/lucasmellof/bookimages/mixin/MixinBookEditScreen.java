@@ -73,6 +73,14 @@ public class MixinBookEditScreen extends Screen implements IScreen {
 		this.addRenderableWidget(widget);
 	}
 
+	@Override
+	public void bookImages$removeComponent(AbstractWidget widget) {
+		if (widget instanceof BookImageWidget bookImageWidget) {
+			this.bookImages$getWidgets().remove(bookImageWidget);
+		}
+		this.removeWidget(widget);
+	}
+
 	@Unique
 	private List<BookImageWidget> bookImages$getWidgets() {
 		if (this.bookImages$widgets == null) {

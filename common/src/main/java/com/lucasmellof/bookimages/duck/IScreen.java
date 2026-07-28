@@ -8,6 +8,8 @@ import net.minecraft.client.gui.components.AbstractWidget;
 public interface IScreen {
 	void bookImages$addComponent(AbstractWidget widget);
 
+	void bookImages$removeComponent(AbstractWidget widget);
+
 	int bookImages$getCurrentPage();
 
 	boolean bookImages$isEditable();
