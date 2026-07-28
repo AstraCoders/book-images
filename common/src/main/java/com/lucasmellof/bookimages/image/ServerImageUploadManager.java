@@ -215,7 +215,7 @@ public class ServerImageUploadManager {
         }
 
         Services.PLATFORM.sendPacketToClient(
-                player, new ClientboundImageUploadConfirmPacket(transferId, width, height));
+                player, new ClientboundImageUploadConfirmPacket(transferId, width, height, width, height));
     }
 
     private void clean(Map<UUID, IncomingImageUpload> playerUploads, UUID transferId) {

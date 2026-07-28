@@ -17,7 +17,7 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.UUID;
 
-public record ClientboundImageUploadConfirmPacket(UUID imageId, int width, int height)
+public record ClientboundImageUploadConfirmPacket(UUID imageId, int width, int height, int originalWidth, int originalHeight)
         implements CustomPacketPayload {
 
     public static final Type<ClientboundImageUploadConfirmPacket> TYPE =
@@ -27,6 +27,8 @@ public record ClientboundImageUploadConfirmPacket(UUID imageId, int width, int h
 			UUIDUtil.STREAM_CODEC, ClientboundImageUploadConfirmPacket::imageId,
 			ByteBufCodecs.INT, ClientboundImageUploadConfirmPacket::width,
 			ByteBufCodecs.INT, ClientboundImageUploadConfirmPacket::height,
+			ByteBufCodecs.INT, ClientboundImageUploadConfirmPacket::originalWidth,
+			ByteBufCodecs.INT, ClientboundImageUploadConfirmPacket::originalHeight,
 			ClientboundImageUploadConfirmPacket::new
 	);
 

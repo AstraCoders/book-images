@@ -273,7 +273,7 @@ public class ClientImageUploadManager {
 
     public void handleImageConfirm(Player player, ClientboundImageUploadConfirmPacket pkt) {
 		if (Minecraft.getInstance().screen instanceof IScreen sc) {
-            var widget = new BookImageWidget(0, 0,pkt.width(), pkt.height(), sc, pkt.imageId(), sc.bookImages$getCurrentPage());
+            var widget = new BookImageWidget(0, 0, pkt.width(), pkt.height(), pkt.originalWidth(), pkt.originalHeight(), sc, pkt.imageId(), sc.bookImages$getCurrentPage());
             sc.bookImages$addComponent(widget);
         }
 	}

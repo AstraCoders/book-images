@@ -46,18 +46,30 @@ public class BookImageWidget extends AbstractWidget {
 	private final int page;
 	private final float aspectRatio;
 
-	public BookImageWidget(int x, int y, int width, int height, IScreen parent, UUID image, int page) {
+	private final int originalWidth;
+	private final int originalHeight;
+
+	public BookImageWidget(int x, int y, int width, int height, int originalWidth, int originalHeight, IScreen parent, UUID image, int page) {
 		super(x, y, width /2, height/2, Component.empty());
 		this.img = image;
 		this.parent = parent;
 		this.page = page;
 
-		this.aspectRatio = height <= 0 ? 1.0F : (float) width / (float) height;
-		this.setWidth(Math.min(this.getWidth(),parent.bookImages$getBookWidth()));
+		this.originalWidth = originalWidth;
+		this.originalHeight = originalHeight;
+
+		// Prefer original dimensions to preserve the true aspect ratio; fall back to provided width/height.
+		if (this.originalWidth > 0 && this.originalHeight > 0) {
+			this.aspectRatio = (float) this.originalWidth / (float) this.originalHeight;
+		} else {
+			this.aspectRatio = height <= 0 ? 1.0F : (float) width / (float) height;
+		}
+
+		this.setWidth(Math.min(this.getWidth(), parent.bookImages$getBookWidth()));
 		this.setHeight(Math.min(this.getHeight(), parent.bookImages$getBookHeight()));
 
-		this.setX(Math.max(0, Math.min(this.getX(),parent.bookImages$getBookWidth() - this.getWidth())));
-		this.setY(Math.max(0, Math.min(this.getY(), parent.bookImages$getBookHeight() - this.getHeight())));
+		this.setX(Math.clamp(this.getX(), 0, parent.bookImages$getBookWidth() - this.getWidth()));
+		this.setY(Math.clamp(this.getY(), 0, parent.bookImages$getBookHeight() - this.getHeight()));
 
 	}
 
@@ -169,8 +181,8 @@ public class BookImageWidget extends AbstractWidget {
 			int newX = relativeMouseX - this.dragOffsetX;
 			int newY = relativeMouseY - this.dragOffsetY;
 
-			newX = Math.max(0, Math.min(newX, this.parent.bookImages$getBookWidth() - this.width));
-			newY = Math.max(0, Math.min(newY, this.parent.bookImages$getBookHeight() - this.height));
+			newX = Math.clamp(newX, 0, this.parent.bookImages$getBookWidth() - this.width);
+			newY = Math.clamp(newY, 0, this.parent.bookImages$getBookHeight() - this.height);
 
 			this.setX(newX);
 			this.setY(newY);
@@ -287,6 +299,8 @@ public class BookImageWidget extends AbstractWidget {
 		tag.putInt("y", this.getY());
 		tag.putInt("width", this.getWidth());
 		tag.putInt("height", this.getHeight());
+		tag.putInt("original_width", this.originalWidth);
+		tag.putInt("original_height", this.originalHeight);
 		return tag;
 	}
 
@@ -297,6 +311,8 @@ public class BookImageWidget extends AbstractWidget {
 					tag.getIntOr("y", 0),
 					tag.getIntOr("width", MIN_WIDTH) * 2,
 					tag.getIntOr("height", MIN_HEIGHT) * 2,
+					tag.getIntOr("original_width", MIN_WIDTH) * 2,
+					tag.getIntOr("original_height", MIN_HEIGHT) * 2,
 					parent,
 					UUID.fromString(tag.getStringOr("id", "")),
 					tag.getIntOr("page", 0));
