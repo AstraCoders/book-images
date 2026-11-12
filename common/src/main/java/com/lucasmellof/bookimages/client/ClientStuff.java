@@ -15,6 +15,7 @@ import java.io.File;
  */
 @NoArgsConstructor
 public class ClientStuff {
+
     public static BufferedImage pasteImage() throws Exception {
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         Clipboard systemClipboard = toolkit.getSystemClipboard();

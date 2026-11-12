@@ -1,0 +1,6 @@
+{
+  "bookimages.image.retry": "Click to retry",
+  "bookimages.upload.failed": "Upload failed",
+  "bookimages.upload.processing": "Processing...",
+  "bookimages.upload.progress": "Uploading... %s%%"
+}

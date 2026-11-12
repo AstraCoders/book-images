@@ -7,8 +7,10 @@ import net.minecraft.client.gui.components.Renderable;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 /*
  * @author Lucasmellof, Lucas de Mello Freitas created on 18/03/2026
@@ -58,5 +60,10 @@ public class NeoForgeClientEvents {
 			}
 		}
 
+	}
+
+	@SubscribeEvent
+	public static void onQuit(ClientPlayerNetworkEvent.LoggingOut event) {
+		ClientImageUploadManager.INSTANCE.cleanup();
 	}
 }

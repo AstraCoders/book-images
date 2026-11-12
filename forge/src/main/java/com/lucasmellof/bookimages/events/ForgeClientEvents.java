@@ -5,6 +5,7 @@ import com.lucasmellof.bookimages.image.ClientImageUploadManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import org.lwjgl.glfw.GLFW;
@@ -20,6 +21,11 @@ public final class ForgeClientEvents {
         ScreenEvent.MouseButtonPressed.Pre.BUS.addListener(ForgeClientEvents::onMousePressed);
         ScreenEvent.MouseButtonReleased.Pre.BUS.addListener(ForgeClientEvents::onMouseReleased);
         ScreenEvent.MouseDragged.Pre.BUS.addListener(ForgeClientEvents::onMouseDragged);
+        ClientPlayerNetworkEvent.LoggingOut.BUS.addListener(ForgeClientEvents::onQuit);
+    }
+
+    private static void onQuit(ClientPlayerNetworkEvent.LoggingOut event) {
+        ClientImageUploadManager.INSTANCE.cleanup();
     }
 
     private static boolean onMousePressed(ScreenEvent.MouseButtonPressed.Pre event) {

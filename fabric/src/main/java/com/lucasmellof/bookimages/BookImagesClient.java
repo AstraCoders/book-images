@@ -5,6 +5,7 @@ import com.lucasmellof.bookimages.image.ClientImageUploadManager;
 import com.lucasmellof.bookimages.packet.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
@@ -46,5 +47,7 @@ public class BookImagesClient implements ClientModInitializer {
             ScreenMouseEvents.allowMouseDrag(screen).register((currentScreen, event, dragX, dragY) ->
                     activeWidget == null || !activeWidget.mouseDragged(event, dragX, dragY));
         });
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientImageUploadManager.INSTANCE.cleanup());
     }
 }
