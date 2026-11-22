@@ -114,7 +114,7 @@ public class ClientImageUploadManager {
                     uuid, new UploadStatus(UploadPhase.UPLOADING, 0, totalChunks, System.currentTimeMillis()));
             this.loadImage(uuid, image);
 
-            if (Minecraft.getInstance().screen instanceof IScreen sc && sc.bookImages$isEditable()) {
+            if (Minecraft.getInstance().gui.screen() instanceof IScreen sc && sc.bookImages$isEditable()) {
                 sc.bookImages$addComponent(new BookImageWidget(
                         0,
                         0,
@@ -362,7 +362,7 @@ public class ClientImageUploadManager {
 
     public void handleImageConfirm(Player player, ClientboundImageUploadConfirmPacket pkt) {
         UploadStatus pending = this.uploadStatuses.remove(pkt.imageId());
-        if (pending == null && Minecraft.getInstance().screen instanceof IScreen sc) {
+        if (pending == null && Minecraft.getInstance().gui.screen() instanceof IScreen sc) {
             var widget = new BookImageWidget(
                     0,
                     0,
