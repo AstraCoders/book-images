@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 public class NeoForgePlatformHelper implements IPlatformHelper {
@@ -26,7 +25,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public boolean isDevelopmentEnvironment() {
-        return !FMLLoader.getCurrent().isProduction();
+        return !FMLLoader.isProduction();
     }
 
     @Override
@@ -36,7 +35,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public void sendPacketToServer(CustomPacketPayload object) {
-        ClientPacketDistributor.sendToServer(object);
+        PacketDistributor.sendToServer(object);
     }
 
     @Override

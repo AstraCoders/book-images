@@ -19,9 +19,6 @@ loom {
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
-    mixin {
-        defaultRefmapName.set("${mod_id}.refmap.json")
-    }
     runs {
         client {
             client()
@@ -75,6 +72,7 @@ tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurs
     mainFile.changelog = rootProject.ext.releaseChangelog
     mainFile.addGameVersion(minecraft_version)
     mainFile.addModLoader('Fabric')
+    mainFile.addEnvironment('Client', 'Server')
     mainFile.addRequirement('fabric-api')
 }
 

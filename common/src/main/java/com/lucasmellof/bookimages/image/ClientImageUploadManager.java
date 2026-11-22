@@ -10,7 +10,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public class ClientImageUploadManager {
     public static final ClientImageUploadManager INSTANCE = new ClientImageUploadManager();
 
     public static final int DELAY = 1;
-    public static final Map<UUID, Identifier> CACHED_IMAGES = new HashMap<>();
+    public static final Map<UUID, ResourceLocation> CACHED_IMAGES = new HashMap<>();
     public static final Map<UUID, Long> IN_PROGRESS_IMAGES = new ConcurrentHashMap<>();
     private static final long IMAGE_REQUEST_TIMEOUT_MS = 15_000L;
     private static final long UPLOAD_CONFIRM_TIMEOUT_MS = 15_000L;
@@ -71,7 +71,7 @@ public class ClientImageUploadManager {
                 int red = RenderUtils.getRed(rgba);
                 int green = RenderUtils.getGreen(rgba);
                 int blue = RenderUtils.getBlue(rgba);
-                nativeImage.setPixelABGR(x, y, RenderUtils.getArgb(alpha, blue, green, red));
+                nativeImage.setPixelRGBA(x, y, RenderUtils.getArgb(alpha, blue, green, red));
             }
         }
         return nativeImage;
@@ -227,13 +227,12 @@ public class ClientImageUploadManager {
 
         var id = Const.of("images/book/" + uuid);
         Minecraft.getInstance()
-                .getEntityRenderDispatcher()
-                .textureManager
-                .register(id, new DynamicTexture(id::toString, toNativeImage(image)));
+                .getTextureManager()
+                .register(id, new DynamicTexture(toNativeImage(image)));
         CACHED_IMAGES.put(uuid, id);
     }
 
-    public Identifier requestImage(UUID uuid) {
+    public ResourceLocation requestImage(UUID uuid) {
         var cached = CACHED_IMAGES.get(uuid);
         if (cached == null) {
             if (failedImageRequests.containsKey(uuid)) {
@@ -274,8 +273,7 @@ public class ClientImageUploadManager {
 
     public void cleanup() {
         CACHED_IMAGES.values().forEach(i -> Minecraft.getInstance()
-                                                    .getEntityRenderDispatcher()
-                                                    .textureManager.release(i));
+                                                    .getTextureManager().release(i));
 
         CACHED_IMAGES.clear(); // check if we need to unregister images
         ongoingUploads.clear();

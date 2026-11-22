@@ -5,16 +5,16 @@ import com.lucasmellof.bookimages.image.ClientImageUploadManager;
 import com.lucasmellof.bookimages.image.ImageLoadState;
 import com.lucasmellof.bookimages.image.UploadPhase;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.UUID;
 
@@ -121,14 +121,16 @@ public class BookImageWidget extends AbstractWidget {
     public static BookImageWidget fromTag(CompoundTag tag, IScreen parent) {
         try {
             return new BookImageWidget(
-                    tag.getIntOr("x", 0),
-                    tag.getIntOr("y", 0),
-                    new InitialSize(tag.getIntOr("width", MIN_WIDTH), tag.getIntOr("height", MIN_HEIGHT)),
-                    tag.getIntOr("original_width", MIN_WIDTH),
-                    tag.getIntOr("original_height", MIN_HEIGHT),
+                    tag.getInt("x"),
+                    tag.getInt("y"),
+                    new InitialSize(
+                            tag.contains("width", Tag.TAG_ANY_NUMERIC) ? tag.getInt("width") : MIN_WIDTH,
+                            tag.contains("height", Tag.TAG_ANY_NUMERIC) ? tag.getInt("height") : MIN_HEIGHT),
+                    tag.contains("original_width", Tag.TAG_ANY_NUMERIC) ? tag.getInt("original_width") : MIN_WIDTH,
+                    tag.contains("original_height", Tag.TAG_ANY_NUMERIC) ? tag.getInt("original_height") : MIN_HEIGHT,
                     parent,
-                    UUID.fromString(tag.getStringOr("id", "")),
-                    tag.getIntOr("page", 0));
+                    UUID.fromString(tag.getString("id")),
+                    tag.getInt("page"));
         } catch (IllegalArgumentException e) {
             return null;
         }
@@ -141,23 +143,25 @@ public class BookImageWidget extends AbstractWidget {
         int renderX = this.parent.bookImages$getBookLeft() + this.getX();
         int renderY = this.parent.bookImages$getBookTop() + this.getY();
 
-        Identifier id = ClientImageUploadManager.INSTANCE.requestImage(this.img);
+        ResourceLocation id = ClientImageUploadManager.INSTANCE.requestImage(this.img);
         if (id == null) {
             renderImagePlaceholder(guiGraphics, renderX, renderY);
         } else {
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
             guiGraphics.blit(
-                    RenderPipelines.GUI_TEXTURED,
                     id,
                     renderX,
                     renderY,
-                    0,
-                    0,
                     this.width,
                     this.height,
+                    0.0F,
+                    0.0F,
                     TEXTURE_WIDTH,
                     TEXTURE_HEIGHT,
                     TEXTURE_WIDTH,
                     TEXTURE_HEIGHT);
+            RenderSystem.disableBlend();
         }
 
         renderUploadStatus(guiGraphics, renderX, renderY);
@@ -167,7 +171,6 @@ public class BookImageWidget extends AbstractWidget {
         var inside = this.isInsideWidget(mouseX, mouseY);
         if (!inside) return;
 
-        guiGraphics.requestCursor(CursorTypes.POINTING_HAND);
         // remove button
         int removeButtonRight = renderX + this.width - 1;
         int removeButtonBottom = renderY + REMOVE_BUTTON_SIZE + 1;
@@ -297,16 +300,16 @@ public class BookImageWidget extends AbstractWidget {
     protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {}
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent ev, boolean unknown) {
+    public boolean mouseClicked(double x, double y, int button) {
         if (this.page != this.parent.bookImages$getCurrentPage()) return false;
         if (!this.parent.bookImages$isEditable()) return false;
 
-        if (ev.button() != InputConstants.MOUSE_BUTTON_LEFT) {
+        if (button != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
 
-        int mouseX = (int) ev.x();
-        int mouseY = (int) ev.y();
+        int mouseX = (int) x;
+        int mouseY = (int) y;
 
         if (isMouseOverRemoveButton(mouseX, mouseY)) {
             this.parent.bookImages$removeComponent(this);
@@ -345,12 +348,12 @@ public class BookImageWidget extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseDragged(MouseButtonEvent ev, double dragX, double dragY) {
+    public boolean mouseDragged(double x, double y, int button, double dragX, double dragY) {
         if (this.page != this.parent.bookImages$getCurrentPage()) return false;
         if (!this.parent.bookImages$isEditable()) return false;
 
-        int mouseX = (int) ev.x();
-        int mouseY = (int) ev.y();
+        int mouseX = (int) x;
+        int mouseY = (int) y;
 
         int relativeMouseX = mouseX - this.parent.bookImages$getBookLeft();
         int relativeMouseY = mouseY - this.parent.bookImages$getBookTop();
@@ -368,7 +371,7 @@ public class BookImageWidget extends AbstractWidget {
         }
 
         if (this.resizing) {
-            boolean free = ev.hasAltDown();
+            boolean free = Screen.hasAltDown();
 
             int maxWidth = this.parent.bookImages$getBookWidth() - this.getX();
             int maxHeight = this.parent.bookImages$getBookHeight() - this.getY();
@@ -431,8 +434,8 @@ public class BookImageWidget extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseReleased(MouseButtonEvent ev) {
-        if (ev.button() == InputConstants.MOUSE_BUTTON_LEFT) {
+    public boolean mouseReleased(double x, double y, int button) {
+        if (button == InputConstants.MOUSE_BUTTON_LEFT) {
             boolean handled = this.dragging || this.resizing;
             this.dragging = false;
             this.resizing = false;

@@ -101,7 +101,7 @@ public class MixinBookViewScreen extends Screen implements IScreen {
 			var images = IBookAccess.of(this.bookAccess).bookImages$getImages();
 			if (images != null) {
 				for (int i = 0; i < images.size(); i++) {
-					var widget = BookImageWidget.fromTag(images.getCompoundOrEmpty(i), this);
+					var widget = BookImageWidget.fromTag(images.getCompound(i), this);
 					if (widget != null) this.bookImages$getWidgets().add(widget);
 				}
 			}

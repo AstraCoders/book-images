@@ -10,6 +10,8 @@
 
 Paste images into Minecraft books, then position and resize them on the page. Images are stored with the world and can be displayed when the book is opened again.
 
+This version supports Minecraft Java Edition 1.21.1 on Fabric and NeoForge and requires Java 21.
+
 An image placed in a Book and Quill:
 
 ![In-game book with an image](docs/images/in-game.png)

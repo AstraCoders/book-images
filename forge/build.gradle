@@ -123,6 +123,7 @@ tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurs
     mainFile.changelog = rootProject.ext.releaseChangelog
     mainFile.addGameVersion(minecraft_version)
     mainFile.addModLoader('Forge')
+    mainFile.addEnvironment('Client', 'Server')
 }
 
 modrinth {

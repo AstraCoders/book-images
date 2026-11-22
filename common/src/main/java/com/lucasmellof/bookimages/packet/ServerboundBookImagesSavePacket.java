@@ -11,7 +11,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
-import org.jspecify.annotations.NonNull;
 
 public record ServerboundBookImagesSavePacket(boolean mainHand, ListTag images) implements CustomPacketPayload {
     public static final Type<ServerboundBookImagesSavePacket> TYPE = new Type<>(Const.of("book_images_save_packet"));
@@ -22,7 +21,7 @@ public record ServerboundBookImagesSavePacket(boolean mainHand, ListTag images) 
             ServerboundBookImagesSavePacket::new);
 
     @Override
-    public @NonNull Type<? extends CustomPacketPayload> type() {
+    public Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 
