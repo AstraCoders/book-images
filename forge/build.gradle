@@ -1,5 +1,7 @@
 plugins {
     id 'multiloader-loader'
+    id 'net.darkhax.curseforgegradle'
+    id 'com.modrinth.minotaur'
     id 'net.minecraftforge.gradle' version '[6.0.46,6.2)'
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
     id 'idea'
@@ -108,4 +110,31 @@ sourceSets.configureEach {
             }
         }
     }
+}
+
+def releaseJar = tasks.named('jar')
+
+tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+    dependsOn(releaseJar)
+    group = 'publishing'
+    apiToken = rootProject.ext.curseforgeKey
+    def mainFile = upload(curseforge_project_id, releaseJar.flatMap { it.archiveFile })
+    mainFile.releaseType = 'release'
+    mainFile.changelogType = 'markdown'
+    mainFile.changelog = rootProject.ext.releaseChangelog
+    mainFile.addGameVersion(minecraft_version)
+    mainFile.addModLoader('Forge')
+    mainFile.addEnvironment('Client', 'Server')
+}
+
+modrinth {
+    token = rootProject.ext.modrinthKey
+    projectId = modrinth_project_id
+    versionNumber = "${minecraft_version}-${project.version}"
+    versionName = "${project.version} for Forge ${minecraft_version}"
+    versionType = 'release'
+    uploadFile = releaseJar
+    gameVersions = [minecraft_version]
+    changelog = rootProject.ext.releaseChangelog
+    loaders = ['forge']
 }

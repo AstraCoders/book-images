@@ -1,5 +1,7 @@
 plugins {
     id 'multiloader-loader'
+    id 'net.darkhax.curseforgegradle'
+    id 'com.modrinth.minotaur'
     id 'net.fabricmc.fabric-loom'
 }
 dependencies {
@@ -46,4 +48,33 @@ sourceSets.configureEach {
             }
         }
     }
+}
+
+def releaseJar = tasks.named('jar')
+
+tasks.register('publishCurseForge', net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+    dependsOn(releaseJar)
+    group = 'publishing'
+    apiToken = rootProject.ext.curseforgeKey
+    def mainFile = upload(curseforge_project_id, releaseJar.flatMap { it.archiveFile })
+    mainFile.releaseType = 'release'
+    mainFile.changelogType = 'markdown'
+    mainFile.changelog = rootProject.ext.releaseChangelog
+    mainFile.addGameVersion(minecraft_version)
+    mainFile.addModLoader('Fabric')
+    mainFile.addEnvironment('Client', 'Server')
+    mainFile.addRequirement('fabric-api')
+}
+
+modrinth {
+    token = rootProject.ext.modrinthKey
+    projectId = modrinth_project_id
+    versionNumber = "${minecraft_version}-${project.version}"
+    versionName = "${project.version} for Fabric ${minecraft_version}"
+    versionType = 'release'
+    uploadFile = releaseJar
+    gameVersions = [minecraft_version]
+    changelog = rootProject.ext.releaseChangelog
+    loaders = ['fabric']
+    dependencies { required.project 'fabric-api' }
 }

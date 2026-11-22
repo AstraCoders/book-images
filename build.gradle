@@ -3,4 +3,36 @@ plugins {
     id 'net.fabricmc.fabric-loom' version '1.15.5' apply false
     // see https://projects.neoforged.net/neoforged/moddevgradle for new versions
     id 'net.neoforged.moddev' version '2.0.148' apply false
+
+    id 'net.darkhax.curseforgegradle' version '1.1.25' apply false
+    id 'com.modrinth.minotaur' version '2.8.7' apply false
+}
+
+def secrets = new Properties()
+def secretsFile = file('secrets.properties')
+if (secretsFile.isFile()) {
+    secretsFile.withInputStream { secrets.load(it) }
+}
+
+ext.curseforgeKey = secrets.getProperty('curseforge_key') ?: providers.environmentVariable('CURSEFORGE_KEY_SECRET').orElse('DUMMY').get()
+ext.modrinthKey = secrets.getProperty('modrinth_key') ?: providers.environmentVariable('MODRINTH_KEY_SECRET').orElse('DUMMY').get()
+
+ext.releaseChangelog = providers.provider {
+    def changelogFile = file('CHANGELOG.md')
+    if (changelogFile.isFile()) {
+        return changelogFile.getText('UTF-8')
+    }
+
+    def commit = providers.environmentVariable('GIT_COMMIT').orElse('HEAD').get()
+    def previousCommit = providers.environmentVariable('GIT_PREVIOUS_COMMIT').orNull
+    try {
+        def changelog = providers.exec {
+            workingDir rootDir
+            commandLine(['git', 'log', '--pretty=tformat:- %s'] +
+                    (previousCommit ? ["${previousCommit}..${commit}"] : ['-1', commit]))
+        }.standardOutput.asText.get().trim()
+        return changelog ?: 'No changelog was provided.'
+    } catch (GradleException ignored) {
+        return 'No changelog was provided.'
+    }
 }
