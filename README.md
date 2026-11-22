@@ -20,6 +20,8 @@ The image also appears when the book is signed:
 
 ## Using the mod
 
+This version supports Minecraft Java Edition 26.1 on Fabric and NeoForge and requires Java 25.
+
 1. Copy an image to your clipboard, or copy a PNG file.
 2. Open a Book and Quill and press **Ctrl+V** (or your system's paste shortcut).
 3. Drag the image to move it. Drag the lower-right handle to resize it; hold **Alt** while resizing to change its proportions freely.

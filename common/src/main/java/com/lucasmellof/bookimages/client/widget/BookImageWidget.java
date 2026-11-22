@@ -7,7 +7,7 @@ import com.lucasmellof.bookimages.image.UploadPhase;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -135,7 +135,7 @@ public class BookImageWidget extends AbstractWidget {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.page != this.parent.bookImages$getCurrentPage()) return;
 
         int renderX = this.parent.bookImages$getBookLeft() + this.getX();
@@ -211,7 +211,7 @@ public class BookImageWidget extends AbstractWidget {
                 0xff59168b);
     }
 
-    private void renderImagePlaceholder(GuiGraphics guiGraphics, int renderX, int renderY) {
+    private void renderImagePlaceholder(GuiGraphicsExtractor guiGraphics, int renderX, int renderY) {
         var state = ClientImageUploadManager.INSTANCE.getImageLoadState(this.img);
         boolean failed = state == ImageLoadState.FAILED;
 
@@ -234,9 +234,9 @@ public class BookImageWidget extends AbstractWidget {
         int centerX = renderX + this.width / 2;
         int centerY = renderY + this.height / 2;
         if (failed) {
-            guiGraphics.drawCenteredString(MINECRAFT.font, "!", centerX, centerY - 4, 0xffff5555);
+            guiGraphics.centeredText(MINECRAFT.font, "!", centerX, centerY - 4, 0xffff5555);
             if (this.width >= 72 && this.height >= 48) {
-                guiGraphics.drawCenteredString(
+                guiGraphics.centeredText(
                         MINECRAFT.font,
                         Component.translatable("bookimages.image.retry"),
                         centerX,
@@ -261,7 +261,7 @@ public class BookImageWidget extends AbstractWidget {
         }
     }
 
-    private void renderUploadStatus(GuiGraphics guiGraphics, int renderX, int renderY) {
+    private void renderUploadStatus(GuiGraphicsExtractor guiGraphics, int renderX, int renderY) {
         var status = ClientImageUploadManager.INSTANCE.getUploadStatus(this.img);
         if (status == null) return;
 
@@ -270,7 +270,7 @@ public class BookImageWidget extends AbstractWidget {
             guiGraphics.fill(renderX, barTop, renderX + this.width, renderY + this.height, 0xffff5555);
             if (this.width >= 72 && this.height >= 24) {
                 guiGraphics.fill(renderX, renderY, renderX + this.width, renderY + 11, 0xb0000000);
-                guiGraphics.drawCenteredString(
+                guiGraphics.centeredText(
                         MINECRAFT.font,
                         Component.translatable("bookimages.upload.failed"),
                         renderX + this.width / 2,
@@ -289,7 +289,7 @@ public class BookImageWidget extends AbstractWidget {
                     ? Component.translatable("bookimages.upload.processing")
                     : Component.translatable("bookimages.upload.progress", Math.round(status.progress() * 100.0F));
             guiGraphics.fill(renderX, renderY, renderX + this.width, renderY + 11, 0xb0000000);
-            guiGraphics.drawCenteredString(MINECRAFT.font, message, renderX + this.width / 2, renderY + 2, 0xffffffff);
+            guiGraphics.centeredText(MINECRAFT.font, message, renderX + this.width / 2, renderY + 2, 0xffffffff);
         }
     }
 

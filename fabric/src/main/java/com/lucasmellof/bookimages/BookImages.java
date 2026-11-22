@@ -14,14 +14,14 @@ public class BookImages implements ModInitializer {
     }
 
     private static void registerPayloads() {
-        var c2s = PayloadTypeRegistry.playC2S();
+        var c2s = PayloadTypeRegistry.serverboundPlay();
         c2s.register(ServerboundImageUploadStartPacket.TYPE, ServerboundImageUploadStartPacket.CODEC);
         c2s.register(ServerboundImageUploadChunkPacket.TYPE, ServerboundImageUploadChunkPacket.CODEC);
         c2s.register(ServerboundImageUploadFinishPacket.TYPE, ServerboundImageUploadFinishPacket.CODEC);
         c2s.register(ServerboundImageRequestPacket.TYPE, ServerboundImageRequestPacket.CODEC);
         c2s.register(ServerboundBookImagesSavePacket.TYPE, ServerboundBookImagesSavePacket.CODEC);
 
-        var s2c = PayloadTypeRegistry.playS2C();
+        var s2c = PayloadTypeRegistry.clientboundPlay();
         s2c.register(ClientboundImageResponseStartPacket.TYPE, ClientboundImageResponseStartPacket.CODEC);
         s2c.register(ClientboundImageResponseChunkPacket.TYPE, ClientboundImageResponseChunkPacket.CODEC);
         s2c.register(ClientboundImageResponseFinishPacket.TYPE, ClientboundImageResponseFinishPacket.CODEC);
