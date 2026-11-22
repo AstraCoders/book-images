@@ -1,5 +1,13 @@
 # Book Images
 
+<div align="center">
+
+![Logo](docs/images/logo.png)
+</div>
+
+<br/>
+<br/>
+
 Paste images into Minecraft books, then position and resize them on the page. Images are stored with the world and can be displayed when the book is opened again.
 
 An image placed in a Book and Quill:
